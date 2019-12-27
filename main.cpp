@@ -17,15 +17,20 @@ int main() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
 
-	uint32_t extensionCount = 0;
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions;
+	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-	std::vector<vk::ExtensionProperties> properties = vk::enumerateInstanceExtensionProperties(nullptr);
+	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	std::vector<const char*> layers;
 
-	std::cout << properties.size() << " extensions supported" << std::endl;
+	vk::Instance instance = vkh::createInstance(extensions, layers);
 
-	glm::mat4 matrix;
-	glm::vec4 vec;
-	auto test = matrix * vec;
+	VkSurfaceKHR rawSurface;
+	if (glfwCreateWindowSurface(static_cast<VkInstance>(instance), window, nullptr, &rawSurface) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create window surface!");
+	}
+	vk::SurfaceKHR surface = rawSurface;
 
 	while(!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -34,6 +39,9 @@ int main() {
 	glfwDestroyWindow(window);
 
 	glfwTerminate();
+
+	instance.destroySurfaceKHR(surface);
+	vkh::destroyInstance(instance);
 
 	return 0;
 }
